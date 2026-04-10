@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<VBox spacing="10" aligment="CENTER"
+      xmlns="http:/>/javafx.com/javafx"
+      xmlms:fx="http://java.com/fxml"
+      fx:controller="controller.RegisterController">
+    <Label text="Đăng kí"/>
+    <Label text="Tên đăng nhập"/>
+    <TextField fx:id="usernameField" promtText="Nhập username"/>
+    <Label text="Nhập mật khẩu"/>
+    <TextFiels fx:id="passwordField" promtText="Nhập mật khẩu"/>
+    <Label text ="Nhập lại mật khẩu"/>
+    <TextField fx:id="ConfirmPasswordField" promtText="Nhập lại mật khẩu"/>
+    <Label text="vai trò"/>
+    <ComboBox fx:id="roleComboBox" promtText="Chọn vai trò"/>
+    <Label fx:id="messageLabel" text=""/>
+    <Button text="Đăng kí " onAction="#handleRegister"/>
+    <Button text="Quay lại đăng nhập" onAction="#gotoLogin"/>
+</VBox>
