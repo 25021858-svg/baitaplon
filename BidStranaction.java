@@ -1,0 +1,62 @@
+package model;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+public class BidStranaction{
+    private int id;
+    private int auctionId;
+    private int bidderId;
+    private BigDecimal amount;
+    private LocalDateTime bidTime;
+
+public BidStranaction(){};
+public BidStranaction(int id,int auctionId,int bidderId,BigDecimal amount,LocalDateTime bidTime){
+    this.id=id;
+    this.auctionId=auctionId;
+    this.bidderId=bidderId;
+    this.amount=amount;
+    this.bidTime=bidTime;
+}
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+
+    public int getAuctionId() {
+        return auctionId;
+    }
+
+    public void setAuctionId(int auctionId) {
+        this.auctionId = auctionId;
+    }
+
+
+    public int getBidderId() {
+        return bidderId;
+    }
+
+    public void setBidderId(int bidderId) {
+        this.bidderId = bidderId;
+    }
+
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+
+    public LocalDateTime getBidTime() {
+        return bidTime;
+    }
+
+    public void setBidTime(LocalDateTime bidTime) {
+        this.bidTime = bidTime;
+    }
+}
