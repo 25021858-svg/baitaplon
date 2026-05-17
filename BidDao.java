@@ -1,5 +1,5 @@
 package dao;
-import model.BidStransaction;
+import model.BidTransaction;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BidDao{
-    public void save(BidStransaction bid) throws SQLException{
+    public void save(BidTransaction bid) throws SQLException{
         String sql= """
                 INSERT INTO bids(auction_id, bidder_id,bid_amount,bid_time)
                 VALUES(?,?,?,?)
@@ -28,13 +28,13 @@ public class BidDao{
         }
 
     }
-    public List<BidStransaction> findAuctionId(int auctionId) throws SQLException{
+    public List<BidTransaction> findAuctionId(int auctionId) throws SQLException{
         String sql= """
                 SELECT*FROM bids
                 WHERE auctions_id=?
                 ORDER BY bid_time ASC
                 """;
-        List<BidStransaction> bids= new ArrayList<>();
+        List<BidTransaction> bids= new ArrayList<>();
     try(
             Connection connection=DatabaseConnection.getConnection();
             PreparedStatement statement=connection.prepareStatement(sql)
@@ -49,7 +49,7 @@ public class BidDao{
     return bids;
 
 }
-public BidStransaction findHighestBidByAuctionId(int auctionId) throws SQLException{
+public BidTransaction findHighestBidByAuctionId(int auctionId) throws SQLException{
         String sql= """
                 SELECT*FROM bids
                 WHERE auction_id=?
@@ -68,12 +68,12 @@ public BidStransaction findHighestBidByAuctionId(int auctionId) throws SQLExcept
         }
         return null;
 }
-private BidStransaction mapResultSetToBid(ResultSet resultSet) throws SQLException{
+private BidTransaction mapResultSetToBid(ResultSet resultSet) throws SQLException{
         int id=resultSet.getInt("id");
         int auctionId=resultSet.getInt("auctionId");
         int bidderId=resultSet.getInt("bidderId");
         BigDecimal bid_amount=resultSet.getBigDecimal("bid_amount");
         LocalDateTime bidTime=LocalDateTime.parse(resultSet.getString("bidTime"));
-        return new BidStransaction(id,auctionId,bidderId,bid_amount,bidTime);
+        return new BidTransaction(id,auctionId,bidderId,bid_amount,bidTime);
 }
 }
