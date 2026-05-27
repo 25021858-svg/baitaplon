@@ -1,0 +1,15 @@
+<?xml vesion= "1.0" encoding="UTF-8" ?>
+<VBox spacing ="10" alignment="CENTRE"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controller.LoginCotroller">
+    <Label text="ĐĂNG NHẬP"/>
+    <Label text="Tên đăng nhập"/>
+    <TextField fx:id="usernameField" promptText="Nhập username"/>
+    <Label text="Mật khẩu"/>
+    <PasswordField fx:id="passwordField" promtText="Nhập mật khẩu"/>
+    <Label fx:id="messageLabel" text=""/>
+    <Button text="Đăng nhập" onAction="#handleLogin"/>
+    <Button text="Chưa co tài khoản? Đăng kí" onAction="#gotoRegister"/>
+
+</VBox>

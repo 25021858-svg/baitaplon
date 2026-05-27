@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="500.0" prefWidth="750.0"
+            xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.example.auction.controller.SellerProductManagementController">
+
+    <children>
+        <Label layoutX="210.0" layoutY="30.0"
+               style="-fx-font-size: 24px; -fx-font-weight: bold;"
+               text="Seller Product Management" />
+
+        <TextField fx:id="productNameField"
+                   layoutX="70.0" layoutY="100.0"
+                   prefWidth="250.0"
+                   promptText="Product name" />
+
+        <TextField fx:id="startingPriceField"
+                   layoutX="350.0" layoutY="100.0"
+                   prefWidth="180.0"
+                   promptText="Starting price" />
+
+        <Button layoutX="560.0" layoutY="100.0"
+                mnemonicParsing="false"
+                text="Add"
+                onAction="#handleAddProduct" />
+
+        <ListView fx:id="productListView"
+                  layoutX="70.0" layoutY="160.0"
+                  prefHeight="250.0" prefWidth="600.0" />
+
+        <Button layoutX="250.0" layoutY="440.0"
+                mnemonicParsing="false"
+                text="Delete"
+                onAction="#handleDeleteProduct" />
+
+        <Button layoutX="360.0" layoutY="440.0"
+                mnemonicParsing="false"
+                text="Logout"
+                onAction="#handleLogout" />
+    </children>
+</AnchorPane>
