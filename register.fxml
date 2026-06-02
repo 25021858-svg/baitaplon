@@ -1,18 +1,28 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<VBox spacing="10" aligment="CENTER"
-      xmlns="http:/>/javafx.com/javafx"
-      xmlms:fx="http://java.com/fxml"
-      fx:controller="controller.RegisterController">
-    <Label text="Đăng kí"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10" alignment="CENTER"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.auction.RegisterController">
+
+    <Label text="ĐĂNG KÝ TÀI KHOẢN" style="-fx-font-weight: bold; -fx-font-size: 16px;"/>
+
     <Label text="Tên đăng nhập"/>
-    <TextField fx:id="usernameField" promptText="Nhập username"/>
-    <Label text="Nhập mật khẩu"/>
-    <TextFiels fx:id="passwordField" promptText="Nhập mật khẩu"/>
-    <Label text ="Nhập lại mật khẩu"/>
-    <TextField fx:id="ConfirmPasswordField" promptText="Nhập lại mật khẩu"/>
-    <Label text="vai trò"/>
-    <ComboBox fx:id="roleComboBox" promptText="Chọn vai trò"/>
-    <Label fx:id="messageLabel" text=""/>
-    <Button text="Đăng kí " onAction="#handleRegister"/>
+    <TextField fx:id="usernameField" promptText="Nhập username" maxWidth="240"/>
+
+    <Label text="Mật khẩu"/>
+    <PasswordField fx:id="passwordField" promptText="Nhập mật khẩu" maxWidth="240"/>
+
+    <Label text="Nhập lại mật khẩu"/>
+    <PasswordField fx:id="confirmPasswordField" promptText="Nhập lại mật khẩu" maxWidth="240"/>
+
+    <Label text="Vai trò"/>
+    <ComboBox fx:id="roleComboBox" promptText="Chọn vai trò" maxWidth="240"/>
+
+    <Label fx:id="messageLabel" text="" textFill="red"/>
+
+    <Button text="Đăng ký" onAction="#handleRegister" prefWidth="120"/>
     <Button text="Quay lại đăng nhập" onAction="#gotoLogin"/>
 </VBox>

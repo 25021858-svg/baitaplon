@@ -1,31 +1,21 @@
-package controller;
+package com.example.auction;
 
+import com.example.auction.util.SceneManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import model.User;
-import service.AuthService;
-import util.SceneManager;
-
 import java.io.IOException;
 
 public class LoginController {
 
-    @FXML
-    private TextField usernameField;
-
-    @FXML
-    private PasswordField passwordField;
-
-    @FXML
-    private Label messageLabel;
-
-    private final AuthService authService = new AuthService();
+    @FXML private TextField usernameField;
+    @FXML private PasswordField passwordField;
+    @FXML private Label messageLabel;
 
     @FXML
     private void handleLogin() {
-        String username = usernameField.getText();
+        String username = usernameField.getText().trim();
         String password = passwordField.getText();
 
         if (username.isBlank() || password.isBlank()) {
@@ -33,40 +23,35 @@ public class LoginController {
             return;
         }
 
-        try {
-            //Pass login sang cho ham login trong Authentication Service
-            User loggedInUser = authService.login(username, password);
+        // Test logic dựa trên bộ nhớ RAM tạm thời
+        if (UserSession.userDatabase.containsKey(username)) {
+            UserSession.UserInfo user = UserSession.userDatabase.get(username);
+            if (user.password.equals(password)) {
+                // Đồng bộ hóa trạng thái phiên chạy tạm
+                UserSession.currentUser = user;
+                UserSession.loggedInUsername = username;
+                UserSession.loggedInRole = user.role;
 
-            //Neu chay ham login khong bi loi va tra ve user thanh cong, thong bao ra man hinh
-            if (loggedInUser != null) {
                 messageLabel.setText("Đăng nhập thành công!");
-                //Sau khi thong bao dang nhap thanh cong, switch sang scene danh sach dau gia
-                SceneManager.switchScene("/view/auction-list.fxml", "Auction System - Main List");
+
+                try {
+                    SceneManager.switchScene("auction-list.fxml", "Auction System - Main List");
+                } catch (IOException e) {
+                    messageLabel.setText("Lỗi: Không tìm thấy giao diện danh sách!");
+                    e.printStackTrace();
+                }
+                return;
             }
-
-        } catch (IllegalArgumentException e) {
-           //Neu co loi thi thong bao ra man hinh
-            messageLabel.setText(e.getMessage());
-
-        } catch (SQLException e) {
-            // Bắt lỗi kết nối Database (ví dụ: chưa bật MySQL, lỗi driver...)
-            messageLabel.setText("Lỗi kết nối cơ sở dữ liệu!");
-            e.printStackTrace();
-
-        } catch (IOException e) {
-            // Bắt lỗi khi không tìm thấy hoặc không mở được file auction-list.fxml
-            messageLabel.setText("Lỗi hệ thống: Không thể chuyển màn hình!");
-            e.printStackTrace();
         }
-        messageLabel.setText("Login tạm thời thành công");
+        messageLabel.setText("Sai tài khoản hoặc mật khẩu!");
     }
 
     @FXML
     private void gotoRegister() {
         try {
-            SceneManager.switchScene("/view/register.fxml", "Auction System - Register");
+            SceneManager.switchScene("register.fxml", "Auction System - Register");
         } catch (IOException e) {
-            messageLabel.setText("Không thể chuyển sang màn hình đăng ký");
+            messageLabel.setText("Không thể chuyển sang màn hình đăng ký!");
             e.printStackTrace();
         }
     }
