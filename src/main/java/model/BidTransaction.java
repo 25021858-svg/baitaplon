@@ -1,15 +1,15 @@
 package model;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-public class BidStransaction{
+public class BidTransaction{
     private int id;
     private int auctionId;
     private int bidderId;
     private BigDecimal amount;
     private LocalDateTime bidTime;
 
-public BidStransaction(){};
-public BidStransaction(int id,int auctionId,int bidderId,BigDecimal amount,LocalDateTime bidTime){
+public BidTransaction(){};
+public BidTransaction(int id,int auctionId,int bidderId,BigDecimal amount,LocalDateTime bidTime){
     this.id=id;
     this.auctionId=auctionId;
     this.bidderId=bidderId;

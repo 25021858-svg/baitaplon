@@ -122,7 +122,7 @@ public class ItemDao {
         String description = resultSet.getString("description");
         BigDecimal startingPrice = resultSet.getBigDecimal("starting_price");
         ItemType itemType = ItemType.valueOf(resultSet.getString("item_type"));
-        LocalDateTime createdAt = LocalDateTime.parse(resultSet.getString("created_at"));
+        LocalDateTime createdAt = parseDateTime(resultSet.getString("created_at"));
         if (itemType == ItemType.ELECTRONICS) {
             return new Electronics(id, sellerId, name, description, startingPrice, createdAt);
         }
@@ -135,5 +135,16 @@ public class ItemDao {
         }
 
         return null;
+    }
+    private LocalDateTime parseDateTime(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        if (value.length() == 10) {
+            return LocalDateTime.parse(value + "T00:00:00");
+        }
+
+        return LocalDateTime.parse(value.replace(" ", "T"));
     }
 }

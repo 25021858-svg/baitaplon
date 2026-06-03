@@ -11,7 +11,7 @@ public abstract class Item{
     private  LocalDateTime createdAt;
     public abstract void printInfo();
     public Item(){};
-    public Item(int id, int sellerId, String name, String description, BigDecimal startingPrice, ItemType itemType, LocalDateTime createAt){
+    public Item(int id, int sellerId, String name, String description, BigDecimal startingPrice, ItemType itemType, LocalDateTime createdAt){
         this.id=id;
         this.sellerId=sellerId;
         this.name=name;

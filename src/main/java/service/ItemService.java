@@ -20,7 +20,7 @@ public class ItemService {
     }
 
     public Item getItemById(int id) throws SQLException {
-        if (id < 0) {
+        if (id <= 0) {
             throw new IllegalArgumentException("id khong hopj le");
         }
         Item item = itemDao.findById(id);
@@ -33,7 +33,7 @@ public class ItemService {
         return itemDao.findAll();
     }
     public List<Item> getItemBySellerId(int sellerId) throws SQLException{
-        if(sellerId<0){
+        if(sellerId<=0){
             throw new IllegalArgumentException("id nguoi dung khong hop le");
         }
         return itemDao.findBySellerId(sellerId);
@@ -42,7 +42,7 @@ public class ItemService {
         if(item==null){
             throw new IllegalArgumentException("san pham khong duoc null");
         }
-        if(item.getId()<0){
+        if(item.getId()<=0){
             throw new IllegalArgumentException("san phan khong hop le");
 
         }
@@ -55,7 +55,7 @@ public class ItemService {
         itemDao.update(item);
     }
     public void deleteItem(int id) throws SQLException{
-        if(id<0){
+        if(id<=0){
             throw new IllegalArgumentException("id khong hop le");
         }
         Item existingItem=itemDao.findById(id);

@@ -16,7 +16,7 @@ public class AuctionDao {
         String sql = """
                 INSERT INTO auctions(item_id,start_time,end_time,current_price,
                 current_winner_id,status,created_at)
-                VALUES(?,?,?,?,?,?)
+                VALUES(?,?,?,?,?,?,?)
                 """;
         try (
                 Connection connection = DatabaseConnection.getConnection();
@@ -117,8 +117,8 @@ public class AuctionDao {
     private Auction mapResultSetToAuction ( ResultSet resultSet) throws SQLException{
         int id= resultSet.getInt("id");
         int itemId= resultSet.getInt("item_id");
-        LocalDateTime startTime= LocalDateTime.parse(resultSet.getString("start_time"));
-        LocalDateTime endTime = LocalDateTime.parse(resultSet.getString("end_time"));
+        LocalDateTime startTime = parseDateTime(resultSet.getString("start_time"));
+        LocalDateTime endTime = parseDateTime(resultSet.getString("end_time"));
         BigDecimal currentPrice = resultSet.getBigDecimal("current_price");
         Integer currentWinnerId=null;
         Object winnerObject=resultSet.getObject("current_winner_id");
@@ -127,7 +127,18 @@ public class AuctionDao {
 
         }
         AuctionStatus status= AuctionStatus.valueOf(resultSet.getString("status"));
-        LocalDateTime createdAt=LocalDateTime.parse(resultSet.getString("created_at"));
+        LocalDateTime createdAt = parseDateTime(resultSet.getString("created_at"));
         return new Auction(id,itemId,startTime,endTime,currentPrice,currentWinnerId,status,createdAt);
+    }
+    private LocalDateTime parseDateTime(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        if (value.length() == 10) {
+            return LocalDateTime.parse(value + "T00:00:00");
+        }
+
+        return LocalDateTime.parse(value.replace(" ", "T"));
     }
 }
