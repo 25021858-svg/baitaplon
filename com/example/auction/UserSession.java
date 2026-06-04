@@ -1,41 +1,20 @@
 package com.example.auction;
 
-import java.util.HashMap;
+// Import class User chuẩn của nhóm trưởng vào
+import com.example.auction.model.User;
 
 public class UserSession {
-    public static String loggedInRole = "Buyer";
-    public static String loggedInUsername = "Guest";
-    public static UserInfo currentUser;
+    // 1. Lưu nguyên cả đối tượng User thật (chứa được cả Bidder, Seller, Admin)
+    public static User currentUser;
 
-    public static HashMap<String, UserInfo> userDatabase = new HashMap<>();
+    // 2. Giữ nguyên 2 biến String này để các màn hình khác ông lỡ gọi rồi không bị lỗi
+    public static String loggedInUsername;
+    public static String loggedInRole;
 
-    static {
-        userDatabase.put("admin", new UserInfo("admin", "123", "Admin"));
-        userDatabase.put("seller", new UserInfo("seller", "123456", "Seller"));
-        userDatabase.put("buyer", new UserInfo("buyer", "123456", "Buyer"));
-    }
-
-    private static UserSession instance;
-    public static synchronized UserSession getInstance() {
-        if (instance == null) {
-            instance = new UserSession();
-        }
-        return instance;
-    }
-
-    public HashMap<String, UserInfo> getUserDatabase() {
-        return userDatabase;
-    }
-
-    public static class UserInfo {
-        public String username;
-        public String password;
-        public String role;
-
-        public UserInfo(String username, String password, String role) {
-            this.username = username;
-            this.password = password;
-            this.role = role;
-        }
+    // Hàm xóa session khi người dùng bấm Đăng xuất (Logout)
+    public static void clear() {
+        currentUser = null;
+        loggedInUsername = null;
+        loggedInRole = null;
     }
 }

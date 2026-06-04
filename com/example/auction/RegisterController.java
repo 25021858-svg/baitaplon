@@ -1,6 +1,7 @@
 package com.example.auction;
 
-import com.example.auction.UserSession;
+import com.example.auction.service.AuthService;
+import com.example.auction.model.Role;
 import com.example.auction.util.SceneManager;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -10,65 +11,90 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import java.io.IOException;
+import java.sql.SQLException;
 
 public class RegisterController {
 
+    // Ánh xạ chính xác tới các Textbox, ComboBox, Label trên file FXML giao diện
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
-    @FXML private PasswordField confirmPasswordField; // Ánh xạ đúng trường nhập lại mật khẩu từ FXML
-    @FXML private ComboBox<String> roleComboBox;       // FIX: Khai báo để kết nối với fx:id="roleComboBox"
+    @FXML private PasswordField confirmPasswordField;
+    @FXML private ComboBox<String> roleComboBox;
     @FXML private Label messageLabel;
+
+    // Khởi tạo AuthService để tương tác với SQLite thông qua UserDao
+    private final AuthService authService = new AuthService();
 
     @FXML
     public void initialize() {
-        // FIX: Đổ dữ liệu giả lập các vai trò vào ComboBox khi màn hình đăng ký khởi chạy
-        roleComboBox.setItems(FXCollections.observableArrayList("Buyer", "Seller"));
-        roleComboBox.setValue("Buyer"); // Đặt vai trò mặc định ban đầu là Người mua
+        // Đổ dữ liệu hiển thị trực quan ra ComboBox cho người dùng chọn khi màn hình hiện lên
+        roleComboBox.setItems(FXCollections.observableArrayList("Bidder", "Seller"));
+        roleComboBox.setValue("Bidder"); // Mặc định ban đầu chọn sẵn Buyer
     }
 
     @FXML
     private void handleRegister() {
+        // Lấy dữ liệu người dùng gõ vào các ô Textbox
         String username = usernameField.getText().trim();
         String password = passwordField.getText();
         String confirmPassword = confirmPasswordField != null ? confirmPasswordField.getText() : "";
-        String assignedRole = roleComboBox.getValue();
+        String assignedRoleStr = roleComboBox.getValue();
 
-        // 1. Kiểm tra tính hợp lệ của dữ liệu đầu vào
-        if (username.isBlank() || password.isBlank()) {
-            messageLabel.setText("Vui lòng điền đầy đủ thông tin!");
+        // 1. Kiểm tra xem người dùng có bỏ trống ô nào không
+        if (username.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("LỖI");
+            alert.setHeaderText(null);
+            alert.setContentText("Vui lòng nhập đầy đủ thông tin");
+            alert.showAndWait();
             return;
         }
 
-        // 2. Kiểm tra khớp mật khẩu
-        if (confirmPasswordField != null && !password.equals(confirmPassword)) {
-            messageLabel.setText("Mật khẩu nhập lại không trùng khớp!");
+        // 2. Kiểm tra mật khẩu nhập lại có khớp không
+        if (!password.equals(confirmPassword)) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("LỖI");
+            alert.setHeaderText(null);
+            alert.setContentText("Mật khẩu nhập lại không trùng khớp");
+            alert.showAndWait();
             return;
         }
 
-        // 3. Kiểm tra tài khoản trùng lặp
-        UserSession session = UserSession.getInstance();
-        if (session.getUserDatabase().containsKey(username)) {
-            messageLabel.setText("Tài khoản này đã tồn tại trên hệ thống!");
-            return;
+        // 3. ĐỒNG BỘ VAI TRÒ: Chuyển đổi từ chữ hiển thị giao diện sang Enum hệ thống
+        Role assignedRole = Role.BIDDER; // "Buyer" trên giao diện tương ứng với role BIDDER trong DB
+        if ("Seller".equals(assignedRoleStr)) {
+            assignedRole = Role.SELLER;  // "Seller" tương ứng với role SELLER trong DB
         }
 
-        // 4. Lưu tài khoản mới vào database RAM giả lập
-        UserSession.UserInfo newUser = new UserSession.UserInfo(username, password, assignedRole);
-        session.getUserDatabase().put(username, newUser);
+        try {
+            // 4. Gọi AuthService để thực hiện ghi trực tiếp tài khoản mới này xuống SQLite
+            authService.register(username, password, assignedRole);
 
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Đăng ký thành công");
-        alert.setHeaderText(null);
-        alert.setContentText("Tài khoản '" + username + "' với vai trò [" + assignedRole + "] đã được tạo thành công!");
-        alert.showAndWait();
+            // 5. Nếu ghi thành công và không văng lỗi -> Hiện Pop-up chúc mừng thông báo
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Đăng ký thành công");
+            alert.setHeaderText(null);
+            alert.setContentText("Tài khoản '" + username + "' với vai trò [" + assignedRoleStr + "] đã được tạo thành công!");
+            alert.showAndWait();
 
-        gotoLogin();
+            // 6. Tự động chuyển hướng người dùng quay lại màn hình Login để test đăng nhập
+            gotoLogin();
+
+        } catch (IllegalArgumentException e) {
+            // Hứng các lỗi bắt trùng lặp (Ví dụ: "Username da ton tai") từ tầng Service rồi in lên giao diện
+            messageLabel.setText(e.getMessage());
+        } catch (SQLException e) {
+            // Hứng lỗi trong trường hợp kết nối cơ sở dữ liệu gặp sự cố
+            messageLabel.setText("Lỗi kết nối cơ sở dữ liệu khi đăng ký!");
+            e.printStackTrace();
+        }
     }
 
     @FXML
     private void gotoLogin() {
+        // Hàm xử lý chuyển màn hình mượt mà, hỗ trợ cả 2 kiểu cấu trúc thư mục FXML phổ biến
         try {
-            SceneManager.switchScene("login.fxml", "Auction System - Login");
+            SceneManager.switchScene("view/login.fxml", "Auction System - Login");
         } catch (IOException e) {
             try {
                 SceneManager.switchScene("/com/example/auction/login.fxml", "Auction System - Login");

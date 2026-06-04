@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10" alignment="CENTER"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.auction.LoginController">
+
+    <Label text="ĐĂNG NHẬP" style="-fx-font-weight: bold; -fx-font-size: 16px;"/>
+
+    <Label text="Tên đăng nhập"/>
+    <TextField fx:id="usernameField" promptText="Nhập username" maxWidth="280"/>
+
+    <Label text="Mật khẩu"/>
+    <PasswordField fx:id="passwordField" promptText="Nhập mật khẩu" maxWidth="280"/>
+
+    <Label fx:id="messageLabel" text="" textFill="red"/>
+
+    <Button text="Đăng nhập" onAction="#handleLogin" prefWidth="120"/>
+    <Button text="Chưa có tài khoản? Đăng ký" onAction="#gotoRegister"/>
+</VBox>

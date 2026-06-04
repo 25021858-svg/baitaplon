@@ -1,8 +1,8 @@
 package client;
 
 import com.google.gson.Gson;
-import server.Request;
-import server.Response;
+import com.example.auction.server.Request;
+import com.example.auction.server.Response;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -38,7 +38,7 @@ public class AuctionClient {
             return gson.fromJson(responseJson, Response.class);
 
         } catch (Exception e) {
-            return Response.fail("Khong the ket noi server: " + e.getMessage());
+            return Response.fail("Khong the ket noi com.example.auction.server: " + e.getMessage());
         }
     }
 

@@ -15,10 +15,7 @@ public class Main extends Application {
         SceneManager.setStage(stage);
 
         // Tìm kiếm file fxml linh hoạt để triệt tiêu lỗi sập app khi chạy trên các máy khác nhau
-        URL fxmlLocation = getClass().getResource("/com/example/auction/login.fxml");
-        if (fxmlLocation == null) {
-            fxmlLocation = getClass().getResource("login.fxml");
-        }
+        URL fxmlLocation = getClass().getResource("view/login.fxml");
 
         if (fxmlLocation == null) {
             throw new IOException("Không tìm thấy file login.fxml. Vui lòng kiểm tra lại vị trí đặt file!");

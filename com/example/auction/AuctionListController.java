@@ -1,5 +1,14 @@
 package com.example.auction;
 
+import com.example.auction.dao.UserDao;
+import com.example.auction.model.Auction;
+import com.example.auction.model.AuctionStatus;
+import com.example.auction.model.Item;
+import com.example.auction.model.User;
+import com.example.auction.service.AuctionService;
+import com.example.auction.service.BidService;
+import com.example.auction.service.ItemService;
+import com.example.auction.util.SceneManager;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -8,302 +17,374 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 
-import com.example.auction.util.SceneManager;
 public class AuctionListController {
 
-    @FXML private TableView<FakeData> auctionTableView;
-    @FXML private TableColumn<FakeData, Integer> idColumn;
-    @FXML private TableColumn<FakeData, String> productNameColumn;
-    @FXML private TableColumn<FakeData, String> priceColumn;
-    @FXML private TableColumn<FakeData, String> statusColumn;
+    @FXML private TableView<AuctionRowData> auctionTableView;
+    @FXML private TableColumn<AuctionRowData, Integer> idColumn;
+    @FXML private TableColumn<AuctionRowData, String> productNameColumn;
+    @FXML private TableColumn<AuctionRowData, String> priceColumn;
+    @FXML private TableColumn<AuctionRowData, String> statusColumn;
 
     @FXML private Label userInfoLabel;
     @FXML private Button makeBidButton;
     @FXML private Button depositButton;
     @FXML private Button newSaleButton;
+    @FXML private Button removeItemButton;
 
-    // Quản lý số dư tài khoản ví ảo tập trung để check điều kiện đặt giá
-    private double userBalance = 50000000.0;
-    private String currentRole = "Buyer";
+    private final AuctionService auctionService = new AuctionService();
+    private final BidService bidService = new BidService();
+    private final ItemService itemService = new ItemService();
+    private final UserDao userDao = new UserDao();
+
+    private int currentUserId;
+    private String currentRole;
 
     @FXML
     public void initialize() {
-        // Kết nối các cột với thuộc tính dữ liệu công khai
+        if (UserSession.currentUser != null) {
+            this.currentUserId = UserSession.currentUser.getId();
+            this.currentRole = UserSession.currentUser.getRole().name();
+        } else {
+            // Backup test nhanh dữ liệu
+            this.currentUserId = 2;
+            this.currentRole = "BIDDER";
+        }
+
+        // Cấu hình bảng hiển thị
+        auctionTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        idColumn.setReorderable(false);
+        productNameColumn.setReorderable(false);
+        priceColumn.setReorderable(false);
+        statusColumn.setReorderable(false);
+
+        idColumn.setMaxWidth(60);
+        idColumn.setMinWidth(50);
+        statusColumn.setMaxWidth(130);
+        statusColumn.setMinWidth(100);
+        priceColumn.setMaxWidth(160);
+        priceColumn.setMinWidth(120);
+
         idColumn.setCellValueFactory(cell -> cell.getValue().idProperty().asObject());
         productNameColumn.setCellValueFactory(cell -> cell.getValue().nameProperty());
         priceColumn.setCellValueFactory(cell -> cell.getValue().priceProperty());
         statusColumn.setCellValueFactory(cell -> cell.getValue().statusProperty());
 
-        idColumn.prefWidthProperty().bind(auctionTableView.widthProperty().multiply(0.10));
-        productNameColumn.prefWidthProperty().bind(auctionTableView.widthProperty().multiply(0.50));
-        priceColumn.prefWidthProperty().bind(auctionTableView.widthProperty().multiply(0.20));
-        statusColumn.prefWidthProperty().bind(auctionTableView.widthProperty().multiply(0.20));
+        // Tải thông tin và phân quyền chức năng giao diện dựa vào Role
+        loadCurrentUserInfo();
+        configureButtonVisibility();
 
-        // Tooltip hiển thị text khi rê chuột vào tên sản phẩm quá dài
-        productNameColumn.setCellFactory(column -> new javafx.scene.control.TableCell<FakeData, String>() {
-            private final javafx.scene.control.Tooltip tooltip = new javafx.scene.control.Tooltip();
+        // Nạp danh sách các phiên đấu giá
+        loadAuctionData();
+    }
 
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setTooltip(null);
+    /**
+     * VẤN ĐỀ 1: Điều khiển việc Ẩn/Hiện nút bấm theo Vai trò (Role-based UI Control)
+     */
+    private void configureButtonVisibility() {
+        if ("SELLER".equalsIgnoreCase(currentRole)) {
+            // Seller bán hàng: Không được đấu giá, không cần nạp tiền vào ví ở đây
+            makeBidButton.setVisible(false);
+            makeBidButton.setManaged(false);
+            depositButton.setVisible(false);
+            depositButton.setManaged(false);
+
+            newSaleButton.setVisible(true);
+            newSaleButton.setManaged(true);
+            removeItemButton.setVisible(true);
+            removeItemButton.setManaged(true);
+        } else if ("BIDDER".equalsIgnoreCase(currentRole)) {
+            // Bidder đi mua: Không được tự tạo phiên hay hủy phiên của người khác
+            makeBidButton.setVisible(true);
+            makeBidButton.setManaged(true);
+            depositButton.setVisible(true);
+            depositButton.setManaged(true);
+
+            newSaleButton.setVisible(false);
+            newSaleButton.setManaged(false);
+            removeItemButton.setVisible(false);
+            removeItemButton.setManaged(false);
+        } else if ("ADMIN".equalsIgnoreCase(currentRole)) {
+            // Quyền tối cao Admin: Thấy và quản lý được toàn bộ hệ thống
+            makeBidButton.setVisible(true);
+            makeBidButton.setManaged(true);
+            depositButton.setVisible(true);
+            depositButton.setManaged(true);
+            newSaleButton.setVisible(true);
+            newSaleButton.setManaged(true);
+            removeItemButton.setVisible(true);
+            removeItemButton.setManaged(true);
+        }
+    }
+
+    private void loadCurrentUserInfo() {
+        try {
+            User user = userDao.findById(currentUserId);
+            if (user != null) {
+                String username = user.getUsername();
+                currentRole = user.getRole().name();
+                configureButtonVisibility(); // Cập nhật lại UI nếu role thay đổi động từ DB
+
+                if (!"SELLER".equalsIgnoreCase(currentRole)) {
+                    BigDecimal balance = userDao.getBalance(currentUserId);
+                    userInfoLabel.setText(String.format("Tài khoản: %s  |  Vai trò: [%s]  |  Số dư ví: %,.0f VNĐ",
+                            username, currentRole, balance.doubleValue()));
                 } else {
-                    setText(item);
-                    tooltip.setText(item);
-                    tooltip.setWrapText(true);
-                    tooltip.setPrefWidth(300);
-                    setTooltip(tooltip);
+                    userInfoLabel.setText(String.format("Tài khoản: %s  |  Vai trò: [%s]", username, currentRole));
+                }
+            } else {
+                userInfoLabel.setText("Không tìm thấy thông tin tài khoản trên hệ thống!");
+            }
+        } catch (Exception e) {
+            userInfoLabel.setText("Lỗi khi tải thông tin người dùng: " + e.getMessage());
+        }
+    }
+
+    private void loadAuctionData() {
+        try {
+            List<Auction> auctions = auctionService.getAllAuctions();
+            ObservableList<AuctionRowData> rowDataList = FXCollections.observableArrayList();
+
+            for (Auction auction : auctions) {
+                try {
+                    Item item = itemService.getItemByid(auction.getItemId());
+                    rowDataList.add(new AuctionRowData(auction, item));
+                } catch (Exception e) {
+                    System.err.println("Không tìm thấy thông tin sản phẩm cho phiên đấu giá ID: " + auction.getId());
                 }
             }
-        });
-
-        // Đổ dữ liệu mẫu (FakeData) chứa cả thuộc tính ẩn: Khởi điểm, Hiện tại, Bước giá tối thiểu
-        ObservableList<FakeData> list = FXCollections.observableArrayList(
-                new FakeData(1, "Laptop Dell XPS 13 Pro cực mượt", 12000000.0, 15000000.0, 500000.0, "Đang mở"),
-                new FakeData(2, "iPhone 13 Pro Max xịn", 15000000.0, 18500000.0, 200000.0, "Đang mở"),
-                new FakeData(3, "Bàn phím cơ AKKO", 800000.0, 1200000.0, 50000.0, "Đã đóng")
-        );
-        auctionTableView.setItems(list);
-
-        // FIX: Sửa model.UserSession thành UserSession do nằm cùng một thư mục package
-        this.currentRole = UserSession.loggedInRole;
-        runMockRoleTesting(currentRole);
-    }
-
-    private void updateUI() {
-        userInfoLabel.setText("Tài khoản: " + UserSession.loggedInUsername + " | Vai trò: " + currentRole + " | Số dư ví ảo: " + String.format("%,.0f VNĐ", userBalance));
-
-        if ("Buyer".equalsIgnoreCase(currentRole)) {
-            makeBidButton.setVisible(true);   makeBidButton.setManaged(true);
-            depositButton.setVisible(true);   depositButton.setManaged(true);
-            newSaleButton.setVisible(false);  newSaleButton.setManaged(false);
-        } else if ("Seller".equalsIgnoreCase(currentRole)) {
-            makeBidButton.setVisible(false);  makeBidButton.setManaged(false);
-            depositButton.setVisible(false);  depositButton.setManaged(false);
-            newSaleButton.setVisible(true);   newSaleButton.setManaged(true);
-        } else {
-            makeBidButton.setVisible(true);   makeBidButton.setManaged(true);
-            depositButton.setVisible(true);   depositButton.setManaged(true);
-            newSaleButton.setVisible(true);   newSaleButton.setManaged(true);
+            auctionTableView.setItems(rowDataList);
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi tải dữ liệu", "Không thể nạp danh sách đấu giá: " + e.getMessage());
         }
-    }
-    /**
-     * Hàm hiển thị giao diện và số dư đồng bộ theo thời gian thực
-     */
-    private void runMockRoleTesting(String role) {
-        userInfoLabel.setText("Tài khoản: " + UserSession.loggedInUsername + " | Vai trò: " + role + " | Số dư ví ảo: " + String.format("%,.0f VNĐ", userBalance));
-
-        if ("Buyer".equalsIgnoreCase(role)) {
-            makeBidButton.setVisible(true);   makeBidButton.setManaged(true);
-            depositButton.setVisible(true);   depositButton.setManaged(true);
-            newSaleButton.setVisible(false);  newSaleButton.setManaged(false);
-        } else if ("Seller".equalsIgnoreCase(role)) {
-            makeBidButton.setVisible(false);  makeBidButton.setManaged(false);
-            depositButton.setVisible(false);  depositButton.setManaged(false);
-            newSaleButton.setVisible(true);   newSaleButton.setManaged(true);
-        } else {
-            makeBidButton.setVisible(true);   makeBidButton.setManaged(true);
-            depositButton.setVisible(true);   depositButton.setManaged(true);
-            newSaleButton.setVisible(true);   newSaleButton.setManaged(true);
-        }
-    }
-
-    @FXML
-    private void handleViewDetail() {
-        FakeData selectedProduct = auctionTableView.getSelectionModel().getSelectedItem();
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Chi tiết sản phẩm");
-        alert.setHeaderText(null);
-
-        if (selectedProduct != null) {
-            // Hiển thị cả các thuộc tính ẩn (Giá khởi điểm và Bước giá tối thiểu)
-            alert.setContentText("=== THÔNG TIN CHI TIẾT ===" +
-                    "\nTên sản phẩm: " + selectedProduct.nameProperty().get() +
-                    "\n----------------------------------------" +
-                    "\n-> Giá khởi điểm: " + String.format("%,.0f VNĐ", selectedProduct.getStartingPrice()) +
-                    "\n-> Giá hiện tại công khai: " + selectedProduct.priceProperty().get() +
-                    "\n-> Bước giá tối thiểu yêu cầu: " + String.format("%,.0f VNĐ", selectedProduct.getMinBidStep()) +
-                    "\n----------------------------------------" +
-                    "\nTrạng thái phiên: " + selectedProduct.statusProperty().get());
-        } else {
-            alert.setContentText("Vui lòng chọn một sản phẩm trong bảng trước khi bấm xem chi tiết!");
-        }
-        alert.showAndWait();
     }
 
     @FXML
     private void handleMakeBid() {
-        FakeData selectedProduct = auctionTableView.getSelectionModel().getSelectedItem();
-
-        // Điều kiện 1: Kiểm tra xem đã chọn sản phẩm trên bảng chưa
-        if (selectedProduct == null) {
-            showMockAlert("Yêu cầu chọn sản phẩm", "Vui lòng chọn một sản phẩm từ bảng danh sách để thực hiện đấu giá!");
+        AuctionRowData selectedRow = auctionTableView.getSelectionModel().getSelectedItem();
+        if (selectedRow == null) {
+            showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Vui lòng chọn một phiên đấu giá trong danh sách!");
             return;
         }
 
-        // Kiểm tra xem sản phẩm có đang mở hay đã đóng phiên đấu giá
-        if ("Đã đóng".equalsIgnoreCase(selectedProduct.statusProperty().get())) {
-            showMockAlert("Phiên đã đóng", "Sản phẩm này đã kết thúc đấu giá, bạn không thể đặt giá thêm.");
+        Auction auction = selectedRow.getAuction();
+
+        if (auction.getStatus() != AuctionStatus.RUNNING) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi trạng thái", "Phiên đấu giá này không ở trạng thái đang diễn ra (RUNNING)!");
             return;
         }
 
-        // Tính toán mức giá hợp lệ tối thiểu tiếp theo
-        double minValidBid = selectedProduct.getCurrentPriceNum() + selectedProduct.getMinBidStep();
+        if (auction.getCurrentWinnerId() != null && auction.getCurrentWinnerId().equals(currentUserId)) {
+            showAlert(Alert.AlertType.INFORMATION, "Thông báo đặt giá", "Bạn đang là người trả giá cao nhất rồi!");
+            return;
+        }
 
-        // Mở hộp thoại nhập số tiền đấu giá
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Tham Gia Đặt Giá Đấu Giá");
-        dialog.setHeaderText("Sản phẩm: " + selectedProduct.nameProperty().get());
-        dialog.setContentText("Giá hiện tại: " + selectedProduct.priceProperty().get() +
-                "\nBước giá tối thiểu: " + String.format("%,.0f VNĐ", selectedProduct.getMinBidStep()) +
-                "\n=> Mức giá đặt tối thiểu tiếp theo: " + String.format("%,.0f VNĐ", minValidBid) +
-                "\n\nNhập số tiền bạn muốn đặt:");
+        dialog.setTitle("Đặt giá đấu");
+        dialog.setHeaderText("Sản phẩm: " + selectedRow.getItem().getName());
+        dialog.setContentText("Nhập số tiền muốn trả (Giá hiện tại: " + auction.getCurrentPrice() + " VNĐ):");
 
         Optional<String> result = dialog.showAndWait();
-        if (result.isPresent()) {
+        result.ifPresent(amountStr -> {
             try {
-                double inputBidAmount = Double.parseDouble(result.get().trim());
+                BigDecimal bidAmount = new BigDecimal(amountStr.trim());
+                bidService.placeBid(auction.getId(), currentUserId, bidAmount);
+                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Bạn đã đặt giá đấu thành công!");
 
-                // Điều kiện 2: Kiểm tra giá đưa ra không được ít hơn (giá hiện tại + bước giá tối thiểu)
-                if (inputBidAmount < minValidBid) {
-                    showMockAlert("Lỗi Đặt Giá", "Giá bạn đặt không hợp lệ!" +
-                            "\nSố tiền nhập vào phải lớn hơn hoặc bằng mức tối thiểu\nquy định: " + String.format("%,.0f VNĐ", minValidBid));
-                    return;
-                }
-
-                // Điều kiện 3: Kiểm tra giá đưa ra không được vượt quá số tiền hiện tại có trong tài khoản
-                if (inputBidAmount > userBalance) {
-                    showMockAlert("Lỗi Số Dư", "Tài khoản của bạn không đủ tiền để thực hiện lượt đặt giá này!" +
-                            "\nSố dư hiện tại: " + String.format("%,.0f VNĐ", userBalance) +
-                            "\nSố tiền bạn muốn đặt: " + String.format("%,.0f VNĐ", inputBidAmount));
-                    return;
-                }
-
-                // --- ĐỦ ĐIỀU KIỆN: TIẾN HÀNH CẬP NHẬT DỮ LIỆU ---
-                selectedProduct.setCurrentPriceNum(inputBidAmount); // Cập nhật lại giá mới của sản phẩm
-                auctionTableView.refresh(); // Ép bảng cập nhật lại giao diện ngay lập tức
-
-                showMockAlert("Đặt giá thành công", "Chúc mừng! Bạn đã trở thành người dẫn đầu phiên với mức giá đặt: " + String.format("%,.0f VNĐ", inputBidAmount));
-
+                loadAuctionData();
+                loadCurrentUserInfo();
             } catch (NumberFormatException e) {
-                showMockAlert("Lỗi Định Dạng", "Vui lòng nhập một số tiền hợp lệ (chỉ bao gồm các ký tự số)!");
+                showAlert(Alert.AlertType.ERROR, "Lỗi nhập liệu", "Vui lòng nhập đúng định dạng số tiền hợp lệ!");
+            } catch (Exception e) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi đặt giá", e.getMessage());
+            }
+        });
+    }
+
+    @FXML
+    private void handleViewDetail() {
+        AuctionRowData selectedRow = auctionTableView.getSelectionModel().getSelectedItem();
+        if (selectedRow == null) {
+            showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Vui lòng chọn một hàng để xem chi tiết!");
+            return;
+        }
+
+        Auction auction = selectedRow.getAuction();
+        Item item = selectedRow.getItem();
+
+        StringBuilder detailText = new StringBuilder();
+        detailText.append("=== THÔNG TIN CHI TIẾT PHIÊN ĐẤU GIÁ ===\n\n");
+        detailText.append("Mã đấu giá (ID): ").append(auction.getId()).append("\n");
+        detailText.append("Tên sản phẩm: ").append(item.getName()).append("\n");
+        detailText.append("Loại sản phẩm: ").append(item.getItemType()).append("\n");
+        detailText.append("Mô tả: ").append(item.getDescription()).append("\n");
+        detailText.append("Giá khởi điểm: ").append(item.getStartingPrice()).append(" VNĐ\n");
+        detailText.append("Giá hiện tại: ").append(auction.getCurrentPrice()).append(" VNĐ\n");
+        detailText.append("Trạng thái: ").append(auction.getStatus()).append("\n");
+
+        if (auction.getCurrentWinnerId() != null && auction.getCurrentWinnerId().equals(currentUserId)) {
+            detailText.append("\nChú thích: Bạn đang là người tạm thời dẫn đầu phiên đấu giá này.");
+        }
+
+        showAlert(Alert.AlertType.INFORMATION, "Chi tiết sản phẩm", detailText.toString());
+    }
+
+    /**
+     * VẤN ĐỀ 2: Bảo vệ dữ liệu (Encapsulation) & Phân quyền nghiệp vụ hủy phiên đấu giá
+     */
+    @FXML
+    private void handleRemoveItem() {
+        // 1. Kiểm tra lựa chọn trên bảng
+        AuctionRowData selected = auctionTableView.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Vui lòng chọn một phiên đấu giá trong bảng để hủy!");
+            return;
+        }
+
+        Auction auction = selected.getAuction();
+        Item item = selected.getItem();
+
+        // 2. Chặn việc hủy vô hạn hoặc sai trạng thái (State pattern concept)
+        AuctionStatus status = auction.getStatus();
+        if (status == AuctionStatus.CANCELED) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi trạng thái", "Phiên đấu giá này ĐÃ BỊ HỦY trước đó rồi. Không thể hủy lại!");
+            return;
+        }
+
+        // Chặn nếu phiên đấu giá đã hoàn tất thành công (FINISHED / PAID)
+        if (status == AuctionStatus.FINISHED || status == AuctionStatus.PAID) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi nghiệp vụ", "Không thể hủy một phiên đấu giá đã kết thúc thành công hoặc đã thanh toán!");
+            return;
+        }
+
+        // 3. Kiểm tra Data Ownership (Chỉ Admin hoặc Chính chủ sở hữu mặt hàng mới được hủy)
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(currentRole);
+        boolean isOwner = false;
+
+        try {
+            // CHÚ Ý KIẾN TRÚC: Gọi getter lấy mã người bán từ Item để thực thi tính đóng gói
+            // Đoạn này giả định class Item của bạn tuân thủ đúng OOP và có thuộc tính `getSellerId()` hoặc tương đương.
+            isOwner = (item.getSellerId() == currentUserId);
+        } catch (Exception e) {
+            // Fallback an toàn phòng khi Class Item của bạn chưa bổ sung trường dữ liệu `sellerId`
+            // Hãy kiểm tra lại class Item.java xem phương thức chuẩn lấy ID người bán là gì nhé!
+            System.err.println("Kiến trúc lưu ý: Vui lòng kiểm tra lại phương thức getSellerId() trong class Item.");
+            isOwner = false;
+        }
+
+        if (!isAdmin && !isOwner) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi phân quyền", "Bạn không có quyền hủy phiên đấu giá này! Chỉ Admin hoặc Người đăng bán sản phẩm mới thực hiện được.");
+            return;
+        }
+
+        // 4. Xác nhận hành động
+        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmAlert.setTitle("Xác nhận hủy phiên");
+        confirmAlert.setHeaderText(null);
+        confirmAlert.setContentText("Bạn có chắc chắn muốn HỦY phiên đấu giá của sản phẩm: [" + item.getName() + "] không?");
+
+        Optional<ButtonType> result = confirmAlert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                // 5. Gọi Service chuyển đổi trạng thái dưới DB
+                auctionService.cancelAuction(auction.getId());
+                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã hủy phiên đấu giá thành công!");
+
+                // 6. Refresh dữ liệu mới lên UI
+                loadAuctionData();
+            } catch (IllegalArgumentException e) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi nghiệp vụ", e.getMessage());
+            } catch (SQLException e) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi hệ thống", "Không thể kết nối CSDL để hủy phiên!");
+                e.printStackTrace();
             }
         }
     }
 
     @FXML
     private void handleDepositMoney() {
-        // NÂNG CẤP CHỨC NĂNG NẠP TIỀN (DEPOSIT)
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Nạp Tiền Vào Tài Khoản");
-        dialog.setHeaderText("Cổng nạp tiền ví điện tử hệ thống");
-        dialog.setContentText("Số dư hiện tại: " + String.format("%,.0f VNĐ", userBalance) + "\n\nNhập số tiền bạn muốn nạp (VNĐ):");
+        TextInputDialog dialog = new TextInputDialog("");
+        dialog.setTitle("Nạp tiền vào ví");
+        dialog.setHeaderText("Nạp tiền tài khoản");
+        dialog.setContentText("Nhập số tiền muốn nạp (VNĐ):");
 
         Optional<String> result = dialog.showAndWait();
         if (result.isPresent()) {
-            try {
-                double depositAmount = Double.parseDouble(result.get().trim());
+            String amountStr = result.get().trim();
+            if (amountStr.isEmpty()) return;
 
-                // Kiểm tra số tiền nạp phải lớn hơn 0
-                if (depositAmount <= 0) {
-                    showMockAlert("Lỗi Nạp Tiền", "Số tiền nạp vào hệ thống phải lớn hơn 0 VNĐ!");
+            try {
+                BigDecimal amount = new BigDecimal(amountStr);
+
+                if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                    showAlert(Alert.AlertType.ERROR, "Lỗi nhập liệu", "Số tiền nạp vào phải lớn hơn 0 VNĐ!");
                     return;
                 }
 
-                // Cộng dồn vào ví hiện có và làm mới thông tin giao diện hiển thị
-                this.userBalance += depositAmount;
-                updateUI();
+                userDao.depositMoney(currentUserId, amount);
+                showAlert(Alert.AlertType.INFORMATION, "Thành công",
+                        "Đã nạp thành công " + String.format("%,.0f VNĐ", amount) + " vào ví tài khoản!");
 
-                showMockAlert("Nạp Tiền Thành Công", "Đã nạp thành công " + String.format("%,.0f VNĐ", depositAmount) + " vào ví tài khoản của bạn.");
+                loadCurrentUserInfo();
 
             } catch (NumberFormatException e) {
-                showMockAlert("Lỗi Định Dạng", "Vui lòng nhập số tiền hợp lệ không chứa ký tự chữ!");
+                showAlert(Alert.AlertType.ERROR, "Lỗi nhập liệu", "Vui lòng chỉ nhập ký tự số hợp lệ!");
+            } catch (SQLException e) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi hệ thống", "Lỗi kết nối cơ sở dữ liệu khi nạp tiền!");
+                e.printStackTrace();
             }
         }
     }
 
     @FXML
     private void handleNewSale() {
-        showMockAlert("Tạo tài sản mới (New Sale)", "Mở form đăng sản phẩm đấu giá mới!");
+        showAlert(Alert.AlertType.INFORMATION, "Tạo phiên", "Tính năng đăng bán sản phẩm đấu giá mới đang được xây dựng!");
     }
 
     @FXML
     private void handleLogout() {
-        // SỬA LỖI LOGOUT: Thêm cảnh báo xác nhận và chuyển hướng về màn hình đăng nhập
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Xác nhận đăng xuất");
-        alert.setHeaderText(null);
-        alert.setContentText("Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?");
-
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
-            // Xóa thông tin phiên làm việc cũ về trạng thái mặc định
-            UserSession.currentUser = null;
-            UserSession.loggedInUsername = "Guest";
-            UserSession.loggedInRole = "Buyer";
-
-            try {
-                // Tự động chuyển scene quay về giao diện Login ban đầu
-                SceneManager.switchScene("login.fxml", "Auction System - Login");
-            } catch (IOException e) {
-                showMockAlert("Lỗi Hệ Thống", "Không thể quay lại màn hình đăng nhập!");
-                e.printStackTrace();
-            }
+        try {
+            SceneManager.switchScene("view/login.fxml", "Auction System - Login");
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi chuyển màn hình", "Không tìm thấy file giao diện đăng nhập login.fxml!");
         }
     }
 
-    private void showMockAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
     }
 
-    // =========================================================================
-    // LỚP DỮ LIỆU MẪU ĐÃ ĐƯỢC THÊM CÁC THUỘC TÍNH ẨN THEO YÊU CẦU
-    // =========================================================================
-    public static class FakeData {
+    public static class AuctionRowData {
         private final SimpleIntegerProperty id;
         private final SimpleStringProperty name;
         private final SimpleStringProperty price;
         private final SimpleStringProperty status;
 
-        // Các thuộc tính ẩn phục vụ nghiệp vụ chi tiết và kiểm tra
-        private final double startingPrice;
-        private final double minBidStep;
-        private double currentPriceNum;
+        private final Auction auction;
+        private final Item item;
 
-        public FakeData(int id, String name, double startingPrice, double currentPriceNum, double minBidStep, String status) {
-            this.id = new SimpleIntegerProperty(id);
-            this.name = new SimpleStringProperty(name);
-            this.startingPrice = startingPrice;
-            this.currentPriceNum = currentPriceNum;
-            this.minBidStep = minBidStep;
-            this.price = new SimpleStringProperty(String.format("%,.0f VNĐ", currentPriceNum));
-            this.status = new SimpleStringProperty(status);
+        public AuctionRowData(Auction auction, Item item) {
+            this.auction = auction;
+            this.item = item;
+
+            this.id = new SimpleIntegerProperty(auction.getId());
+            this.name = new SimpleStringProperty(item.getName());
+
+            double currentPriceVal = auction.getCurrentPrice() != null ? auction.getCurrentPrice().doubleValue() : 0.0;
+            this.price = new SimpleStringProperty(String.format("%,.0f VNĐ", currentPriceVal));
+            this.status = new SimpleStringProperty(auction.getStatus() != null ? auction.getStatus().name() : "OPEN");
         }
 
-        public double getStartingPrice() {
-            return startingPrice;
-        }
-
-        public double getMinBidStep() {
-            return minBidStep;
-        }
-
-        public double getCurrentPriceNum() {
-            return currentPriceNum;
-        }
-
-        public void setCurrentPriceNum(double newPrice) {
-            this.currentPriceNum = newPrice;
-            this.price.set(String.format("%,.0f VNĐ", newPrice)); // Đồng bộ text hiển thị lên TableView
-        }
+        public Auction getAuction() { return auction; }
+        public Item getItem() { return item; }
 
         public SimpleIntegerProperty idProperty() { return id; }
         public SimpleStringProperty nameProperty() { return name; }
