@@ -1,22 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="10" alignment="CENTER"
-      xmlns="http://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.auction.LoginController">
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controller.LoginController"
+            prefWidth="900"
+            prefHeight="600"
+            styleClass="root">
 
-    <Label text="ĐĂNG NHẬP" style="-fx-font-weight: bold; -fx-font-size: 16px;"/>
+    <center>
+        <VBox alignment="CENTER" spacing="18">
 
-    <Label text="Tên đăng nhập"/>
-    <TextField fx:id="usernameField" promptText="Nhập username" maxWidth="280"/>
+            <VBox alignment="CENTER" spacing="14" maxWidth="380" styleClass="card">
+                <Label text="Auction System" styleClass="page-title"/>
+                <Label text="Login to continue" styleClass="sub-title"/>
 
-    <Label text="Mật khẩu"/>
-    <PasswordField fx:id="passwordField" promptText="Nhập mật khẩu" maxWidth="280"/>
+                <TextField fx:id="usernameField"
+                           promptText="Username"
+                           maxWidth="300"
+                           styleClass="input"/>
 
-    <Label fx:id="messageLabel" text="" textFill="red"/>
+                <PasswordField fx:id="passwordField"
+                               promptText="Password"
+                               maxWidth="300"
+                               styleClass="input"/>
 
-    <Button text="Đăng nhập" onAction="#handleLogin" prefWidth="120"/>
-    <Button text="Chưa có tài khoản? Đăng ký" onAction="#gotoRegister"/>
-</VBox>
+                <Button text="Login"
+                        onAction="#handleLogin"
+                        maxWidth="300"
+                        prefWidth="300"
+                        styleClass="primary-button"/>
+
+                <Button text="Create account"
+                        onAction="#goToRegister"
+                        maxWidth="300"
+                        prefWidth="300"
+                        styleClass="secondary-button"/>
+
+                <Label fx:id="messageLabel" styleClass="error-label"/>
+            </VBox>
+
+        </VBox>
+    </center>
+</BorderPane>

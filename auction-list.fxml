@@ -1,48 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="500.0" prefWidth="750.0"
-            xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="com.example.auction.AuctionListController">
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controller.AuctionListController"
+            prefWidth="1000"
+            prefHeight="650"
+            styleClass="root">
 
-    <children>
-        <Label layoutY="15.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" alignment="CENTER"
-               style="-fx-font-size: 24px; -fx-font-weight: bold;" text="Auction List" />
+    <left>
+        <VBox spacing="16" prefWidth="220" styleClass="sidebar">
+            <Label text="Auction App" styleClass="sidebar-title"/>
 
-        <Label fx:id="userInfoLabel" layoutY="55.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0" alignment="CENTER_LEFT"
-               style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #444444;" text="Thông tin người dùng..." />
+            <Button text="Auction List"
+                    prefWidth="170"
+                    styleClass="primary-button"/>
 
-        <TableView fx:id="auctionTableView" layoutX="50.0" layoutY="85.0" prefHeight="260.0" prefWidth="600.0"
-                   AnchorPane.topAnchor="85.0" AnchorPane.bottomAnchor="90.0"
-                   AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
-            <columns>
-                <TableColumn fx:id="idColumn" text="ID" reorderable="false" />
-                <TableColumn fx:id="productNameColumn" text="Product Name" reorderable="false" />
-                <TableColumn fx:id="priceColumn" text="Current Price" reorderable="false" />
-                <TableColumn fx:id="statusColumn" text="Status" reorderable="false" />
-            </columns>
-        </TableView>
+            <Button text="Refresh"
+                    onAction="#handleRefresh"
+                    prefWidth="170"
+                    styleClass="secondary-button"/>
 
-        <HBox spacing="10" alignment="CENTER_LEFT"
-              AnchorPane.bottomAnchor="35.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
-            <children>
-                <Button text="View Detail" onAction="#handleViewDetail" />
-                <Button fx:id="makeBidButton" text="Make Bid" onAction="#handleMakeBid" />
-                <Button fx:id="depositButton" text="Deposit Money" onAction="#handleDepositMoney" />
-                <Button fx:id="newSaleButton" text="New Sale" onAction="#handleNewSale" />
+            <Button text="Logout"
+                    onAction="#handleLogout"
+                    prefWidth="170"
+                    styleClass="danger-button"/>
+        </VBox>
+    </left>
 
-                <Region HBox.hgrow="ALWAYS" />
+    <top>
+        <VBox spacing="8" style="-fx-padding: 24 24 8 24;">
+            <Label text="Auction List" styleClass="page-title"/>
+            <Label fx:id="welcomeLabel" styleClass="sub-title"/>
+            <Label fx:id="messageLabel" styleClass="success-label"/>
+        </VBox>
+    </top>
 
-                <Button text="Logout" onAction="#handleLogout" style="-fx-background-color: #ff4d4d; -fx-text-fill: white; -fx-font-weight: bold;" />
-            </children>
+    <center>
+        <VBox spacing="12" style="-fx-padding: 16 24;">
+            <VBox spacing="10" styleClass="card">
+                <Label text="Available Auctions"
+                       style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+                <TextArea fx:id="auctionTextArea"
+                          editable="false"
+                          wrapText="true"
+                          prefHeight="390"/>
+            </VBox>
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox spacing="10" style="-fx-padding: 16 24 24 24;">
+            <TextField fx:id="auctionIdField"
+                       promptText="Enter Auction ID"
+                       prefWidth="180"
+                       styleClass="input"/>
+
+            <Button text="Open Detail"
+                    onAction="#handleOpenAuctionDetail"
+                    styleClass="primary-button"/>
+
+            <Button text="Refresh"
+                    onAction="#handleRefresh"
+                    styleClass="secondary-button"/>
         </HBox>
-    </children>
-</AnchorPane>
+    </bottom>
+</BorderPane>
