@@ -8,11 +8,71 @@ import model.AuctionStatus;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
+import dao.ItemDao;
+import model.Item;
+import model.AuctionStatus;
+import model.Auction;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import dao.ItemDao;
+import model.Auction;
+import model.AuctionStatus;
+import model.Item;
+
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+
+import java.time.LocalDateTime;
 public class AuctionService{
+    private final ItemDao itemDao;
     private final AuctionDao auctionDao;
     public AuctionService(){
         this.auctionDao=new AuctionDao();
+        this.itemDao = new ItemDao();
+    }
+    public void createAuction(int itemId, LocalDateTime startTime,
+                              LocalDateTime endTime, BigDecimal currentPrice) throws SQLException {
+        if (itemId <= 0) {
+            throw new IllegalArgumentException("itemId khong hop le");
+        }
+
+        if (startTime == null) {
+            throw new IllegalArgumentException("startTime khong duoc de trong");
+        }
+
+        if (endTime == null) {
+            throw new IllegalArgumentException("endTime khong duoc de trong");
+        }
+
+        if (!endTime.isAfter(startTime)) {
+            throw new IllegalArgumentException("endTime phai sau startTime");
+        }
+
+        if (currentPrice == null || currentPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("gia khoi diem phai lon hon 0");
+        }
+
+        Item item = itemDao.findById(itemId);
+
+        if (item == null) {
+            throw new IllegalArgumentException("khong tim thay san pham de tao auction");
+        }
+
+        Auction auction = new Auction(
+                0,
+                itemId,
+                startTime,
+                endTime,
+                currentPrice,
+                null,
+                AuctionStatus.OPEN,
+                LocalDateTime.now()
+        );
+
+        auctionDao.save(auction);
     }
     public Auction getAuctionById(int auctionId) throws SQLException{
         if(auctionId <=0){

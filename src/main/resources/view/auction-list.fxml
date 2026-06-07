@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controller.AuctionListController"
+            prefWidth="1000"
+            prefHeight="650"
+            styleClass="root">
+
+    <left>
+        <VBox spacing="16" prefWidth="220" styleClass="sidebar">
+            <Label text="Auction App" styleClass="sidebar-title"/>
+
+            <Button text="Auction List"
+                    prefWidth="170"
+                    styleClass="primary-button"/>
+
+            <Button text="Refresh"
+                    onAction="#handleRefresh"
+                    prefWidth="170"
+                    styleClass="secondary-button"/>
+
+            <Button text="Logout"
+                    onAction="#handleLogout"
+                    prefWidth="170"
+                    styleClass="danger-button"/>
+        </VBox>
+    </left>
+
+    <top>
+        <VBox spacing="8" style="-fx-padding: 24 24 8 24;">
+            <Label text="Auction List" styleClass="page-title"/>
+            <Label fx:id="welcomeLabel" styleClass="sub-title"/>
+            <Label fx:id="messageLabel" styleClass="success-label"/>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="12" style="-fx-padding: 16 24;">
+            <VBox spacing="10" styleClass="card">
+                <Label text="Available Auctions"
+                       style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+                <TextArea fx:id="auctionTextArea"
+                          editable="false"
+                          wrapText="true"
+                          prefHeight="390"/>
+            </VBox>
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox spacing="10" style="-fx-padding: 16 24 24 24;">
+            <TextField fx:id="auctionIdField"
+                       promptText="Enter Auction ID"
+                       prefWidth="180"
+                       styleClass="input"/>
+
+            <Button text="Open Detail"
+                    onAction="#handleOpenAuctionDetail"
+                    styleClass="primary-button"/>
+
+            <Button text="Refresh"
+                    onAction="#handleRefresh"
+                    styleClass="secondary-button"/>
+        </HBox>
+    </bottom>
+</BorderPane>

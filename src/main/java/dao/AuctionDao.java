@@ -10,6 +10,11 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import model.Auction;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 public class AuctionDao {
     public void save(Auction auction) throws SQLException {
@@ -36,6 +41,7 @@ public class AuctionDao {
             statement.executeUpdate();
         }
     }
+
 
     public Auction findById(int id) throws SQLException {
         String sql = "SELECT *FROM auctions WHERE id=?";
@@ -98,6 +104,8 @@ public class AuctionDao {
             statement.executeUpdate();
         }
     }
+
+
     public void updateStatus(int auctionId,AuctionStatus status) throws SQLException{
         String sql= """
                 UPDATE auctions

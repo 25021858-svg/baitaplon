@@ -1,6 +1,7 @@
 package server;
 
-import java.io.IOException;
+import service.AuctionService;
+
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -8,26 +9,37 @@ public class AuctionServer {
     private static final int PORT = 8888;
 
     public static void main(String[] args) {
-        start();
-    }
+        startAutoCloseAuctionTask();
 
-    public static void start() {
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Auction server dang chay o port " + PORT);
+            System.out.println("AuctionServer dang chay o port " + PORT);
 
             while (true) {
-                Socket clientSocket = serverSocket.accept();
-
-                System.out.println("Client moi ket noi: " + clientSocket.getInetAddress());
-
-                ClientHandler clientHandler = new ClientHandler(clientSocket);
-
-                Thread thread = new Thread(clientHandler);
-                thread.start();
+                Socket socket = serverSocket.accept();
+                ClientHandler clientHandler = new ClientHandler(socket);
+                new Thread(clientHandler).start();
             }
 
-        } catch (IOException e) {
-            System.out.println("Loi server: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
+
+    private static void startAutoCloseAuctionTask() {
+        Thread thread = new Thread(() -> {
+            AuctionService auctionService = new AuctionService();
+
+            while (true) {
+                try {
+                    auctionService.closeExpireAuctions();
+                    Thread.sleep(10000);
+                } catch (Exception e) {
+                    System.out.println("Loi auto close auction: " + e.getMessage());
+                }
+            }
+        });
+
+        thread.setDaemon(true);
+        thread.start();
     }
 }

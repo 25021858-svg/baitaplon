@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controller.SellerProductManagementController"
+            prefWidth="1100"
+            prefHeight="700"
+            styleClass="root">
+
+    <left>
+        <VBox spacing="16" prefWidth="220" styleClass="sidebar">
+            <Label text="Auction App" styleClass="sidebar-title"/>
+
+            <Button text="My Products"
+                    prefWidth="170"
+                    styleClass="primary-button"/>
+
+            <Button text="Refresh"
+                    onAction="#handleRefresh"
+                    prefWidth="170"
+                    styleClass="secondary-button"/>
+
+            <Button text="Logout"
+                    onAction="#handleLogout"
+                    prefWidth="170"
+                    styleClass="danger-button"/>
+        </VBox>
+    </left>
+
+    <top>
+        <VBox spacing="8" style="-fx-padding: 24 24 8 24;">
+            <Label text="Seller Product Management" styleClass="page-title"/>
+            <Label fx:id="welcomeLabel" styleClass="sub-title"/>
+            <Label fx:id="messageLabel" styleClass="success-label"/>
+        </VBox>
+    </top>
+
+    <center>
+        <HBox spacing="20" style="-fx-padding: 16 24 24 24;">
+
+            <VBox spacing="12" styleClass="card" prefWidth="620">
+                <Label text="My Product List"
+                       style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+                <TextArea fx:id="productTextArea"
+                          editable="false"
+                          wrapText="true"
+                          prefHeight="460"/>
+            </VBox>
+
+            <VBox spacing="12" styleClass="card" prefWidth="330">
+                <Label text="Product Form"
+                       style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+                <TextField fx:id="itemIdField"
+                           promptText="Item ID for update/delete"
+                           styleClass="input"/>
+
+                <TextField fx:id="nameField"
+                           promptText="Product name"
+                           styleClass="input"/>
+
+                <TextField fx:id="descriptionField"
+                           promptText="Description"
+                           styleClass="input"/>
+
+                <TextField fx:id="startingPriceField"
+                           promptText="Starting price"
+                           styleClass="input"/>
+
+                <ComboBox fx:id="itemTypeComboBox"
+                          prefWidth="280"/>
+
+                <Button text="Create Product"
+                        onAction="#handleCreateItem"
+                        prefWidth="280"
+                        styleClass="primary-button"/>
+
+                <Button text="Update Product"
+                        onAction="#handleUpdateItem"
+                        prefWidth="280"
+                        styleClass="secondary-button"/>
+
+                <Button text="Delete Product"
+                        onAction="#handleDeleteItem"
+                        prefWidth="280"
+                        styleClass="danger-button"/>
+
+                <Button text="Clear Form"
+                        onAction="#handleClearForm"
+                        prefWidth="280"
+                        styleClass="secondary-button"/>
+            </VBox>
+
+        </HBox>
+    </center>
+</BorderPane>

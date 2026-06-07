@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controller.LoginController"
+            prefWidth="900"
+            prefHeight="600"
+            styleClass="root">
+
+    <center>
+        <VBox alignment="CENTER" spacing="18">
+
+            <VBox alignment="CENTER" spacing="14" maxWidth="380" styleClass="card">
+                <Label text="Auction System" styleClass="page-title"/>
+                <Label text="Login to continue" styleClass="sub-title"/>
+
+                <TextField fx:id="usernameField"
+                           promptText="Username"
+                           maxWidth="300"
+                           styleClass="input"/>
+
+                <PasswordField fx:id="passwordField"
+                               promptText="Password"
+                               maxWidth="300"
+                               styleClass="input"/>
+
+                <Button text="Login"
+                        onAction="#handleLogin"
+                        maxWidth="300"
+                        prefWidth="300"
+                        styleClass="primary-button"/>
+
+                <Button text="Create account"
+                        onAction="#goToRegister"
+                        maxWidth="300"
+                        prefWidth="300"
+                        styleClass="secondary-button"/>
+
+                <Label fx:id="messageLabel" styleClass="error-label"/>
+            </VBox>
+
+        </VBox>
+    </center>
+</BorderPane>

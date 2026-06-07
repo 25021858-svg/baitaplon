@@ -80,6 +80,18 @@ public class AuctionClient {
         Request request = new Request("PLACE_BID", data);
         return sendRequest(request);
     }
+    public Response getItems() {
+        Request request = new Request("GET_ITEMS", new HashMap<>());
+        return sendRequest(request);
+    }
+
+    public Response getItemsBySeller(int sellerId) {
+        Map<String, String> data = new HashMap<>();
+        data.put("sellerId", String.valueOf(sellerId));
+
+        Request request = new Request("GET_ITEMS_BY_SELLER", data);
+        return sendRequest(request);
+    }
     public Response login(String username, String password) {
         Map<String, String> data = new HashMap<>();
         data.put("username", username);
@@ -96,6 +108,70 @@ public class AuctionClient {
         data.put("role", role);
 
         Request request = new Request("REGISTER", data);
+        return sendRequest(request);
+    }
+    public Response createItem(int sellerId, String name, String description,
+                               BigDecimal startingPrice, String itemType) {
+        Map<String, String> data = new HashMap<>();
+        data.put("sellerId", String.valueOf(sellerId));
+        data.put("name", name);
+        data.put("description", description);
+        data.put("startingPrice", startingPrice.toString());
+        data.put("itemType", itemType);
+
+        Request request = new Request("CREATE_ITEM", data);
+        return sendRequest(request);
+    }
+
+    public Response updateItem(int itemId, String name, String description,
+                               BigDecimal startingPrice, String itemType) {
+        Map<String, String> data = new HashMap<>();
+        data.put("itemId", String.valueOf(itemId));
+        data.put("name", name);
+        data.put("description", description);
+        data.put("startingPrice", startingPrice.toString());
+        data.put("itemType", itemType);
+
+        Request request = new Request("UPDATE_ITEM", data);
+        return sendRequest(request);
+    }
+    public Response createAuction(int itemId, String startTime,
+                                  String endTime, BigDecimal currentPrice) {
+        Map<String, String> data = new HashMap<>();
+        data.put("itemId", String.valueOf(itemId));
+        data.put("startTime", startTime);
+        data.put("endTime", endTime);
+        data.put("currentPrice", currentPrice.toString());
+
+        Request request = new Request("CREATE_AUCTION", data);
+        return sendRequest(request);
+    }
+
+    public Response closeExpiredAuctions() {
+        Request request = new Request("CLOSE_EXPIRED_AUCTIONS", new HashMap<>());
+        return sendRequest(request);
+    }
+
+    public Response markAsPaid(int auctionId) {
+        Map<String, String> data = new HashMap<>();
+        data.put("auctionId", String.valueOf(auctionId));
+
+        Request request = new Request("MARK_AS_PAID", data);
+        return sendRequest(request);
+    }
+    public Response getBidsByAuction(int auctionId) {
+        Map<String, String> data = new HashMap<>();
+        data.put("auctionId", String.valueOf(auctionId));
+
+        Request request = new Request("GET_BIDS_BY_AUCTION", data);
+        return sendRequest(request);
+    }
+
+    public Response deleteItem(int itemId) {
+        Map<String, String> data = new HashMap<>();
+        data.put("itemId", String.valueOf(itemId));
+
+        Request request = new Request("DELETE_ITEM", data);
         return sendRequest(request);
     }
 }

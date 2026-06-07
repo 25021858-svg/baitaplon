@@ -38,7 +38,7 @@ CREATE TABLE bids (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     auction_id INTEGER NOT NULL,
     bidder_id INTEGER NOT NULL,
-    bid_amount DECIMAL(15,2) NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
     bid_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (auction_id) REFERENCES auctions(id),
     FOREIGN KEY (bidder_id) REFERENCES users(id)

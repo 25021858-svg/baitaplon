@@ -1,20 +1,15 @@
 package controller;
+
+import client.AuctionClient;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import server.Response;
 import util.SceneManager;
 
-import java.io.IOException;
-
 public class RegisterController {
-
     @FXML
     private TextField usernameField;
 
@@ -30,33 +25,42 @@ public class RegisterController {
     @FXML
     private Label messageLabel;
 
+    private final AuctionClient auctionClient = new AuctionClient();
+
     @FXML
-    public void handleRegister() {
+    public void initialize() {
+        roleComboBox.getItems().addAll("BIDDER", "SELLER");
+        roleComboBox.setValue("BIDDER");
+    }
+
+    @FXML
+    private void handleRegister() {
         String username = usernameField.getText();
         String password = passwordField.getText();
         String confirmPassword = confirmPasswordField.getText();
         String role = roleComboBox.getValue();
 
-        if (username.isBlank() || password.isBlank() || confirmPassword.isBlank() || role == null) {
-            messageLabel.setText("Vui lòng nhập đầy đủ thông tin");
+        if (username.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+            messageLabel.setText("Vui long nhap day du thong tin");
             return;
         }
 
         if (!password.equals(confirmPassword)) {
-            messageLabel.setText("Mật khẩu nhập lại không khớp");
+            messageLabel.setText("Mat khau xac nhan khong khop");
             return;
         }
 
-        messageLabel.setText("Đăng ký tạm thời thành công");
+        Response response = auctionClient.register(username, password, role);
+
+        if (response.isSuccess()) {
+            messageLabel.setText("Dang ky thanh cong");
+        } else {
+            messageLabel.setText(response.getMessage());
+        }
     }
 
     @FXML
-    private void gotoLogin() {
-        try {
-            SceneManager.switchScene("/view/login.fxml", "Auction System - Login");
-        } catch (IOException e) {
-            messageLabel.setText("Không thể quay lại màn hình đăng nhập");
-            e.printStackTrace();
-        }
+    private void goToLogin() {
+        SceneManager.switchScene("/view/login.fxml", "Login");
     }
 }
